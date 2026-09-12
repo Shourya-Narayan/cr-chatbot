@@ -26,14 +26,14 @@
     .email-wrap:focus-within{border-color:rgba(139,92,246,0.6);box-shadow:0 0 0 3px rgba(139,92,246,0.1)}
     .email-wrap.error-border{border-color:rgba(220,38,38,0.6)!important;box-shadow:0 0 0 3px rgba(220,38,38,0.08)!important}
     #userpart{flex:1;padding:12px 14px;border:none;background:transparent;
-      color:#ede9fe;font-size:0.88rem;font-family:inherit;outline:none;min-width:0}
+      color:#ede9fe;font-size:16px;font-family:inherit;outline:none;min-width:0}
     #userpart::placeholder{color:rgba(200,185,255,0.3)}
     #domainSuffix{padding:12px 12px 12px 0;color:rgba(200,185,255,0.45);font-size:0.82rem;
       white-space:nowrap;flex-shrink:0;transition:opacity .2s}
 
     /* PIN boxes */
     .pin-wrap{display:flex;gap:10px;justify-content:center;margin-top:7px}
-    .pin-box{width:54px;height:58px;border-radius:14px;border:1px solid rgba(255,255,255,0.1);
+    .pin-box{width:54px;height:58px;border-radius:14px;border:1px solid rgba(255,255,255,0.1);touch-action:manipulation;-webkit-tap-highlight-color:transparent;
       background:rgba(255,255,255,0.06);color:#ede9fe;font-size:1.5rem;font-weight:600;
       text-align:center;outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s;caret-color:transparent}
     .pin-box:focus{border-color:rgba(139,92,246,0.7);box-shadow:0 0 0 3px rgba(139,92,246,0.12)}
@@ -55,6 +55,11 @@
 
     .contact{margin-top:14px;text-align:center;font-size:0.74rem;color:rgba(200,185,255,0.4)}
     .footer{margin-top:22px;text-align:center;font-size:0.64rem;color:rgba(200,185,255,0.22)}
+    @media(max-width:420px){
+      .card{padding:32px 22px}
+      .pin-box{width:48px;height:52px;font-size:1.3rem}
+      .pin-wrap{gap:8px}
+    }
   </style>
 </head>
 <body>

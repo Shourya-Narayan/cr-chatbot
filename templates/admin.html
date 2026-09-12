@@ -50,6 +50,22 @@
     .seed-banner{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);
       border-radius:14px;padding:20px;text-align:center;margin-bottom:20px}
     .seed-banner p{font-size:0.85rem;color:rgba(200,185,255,0.7);margin-bottom:14px}
+    .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+    @media(max-width:640px){
+      body{padding:16px 10px}
+      .top{gap:8px}
+      h1{font-size:1rem}
+      .btn{padding:7px 12px;font-size:0.75rem}
+      .stats{grid-template-columns:repeat(2,1fr);gap:8px}
+      .stat .val{font-size:1.4rem}
+      th,td{padding:9px 8px}
+      th:nth-child(3),td:nth-child(3){display:none} /* hide Last Active on mobile */
+      .av{width:26px;height:26px;font-size:0.65rem}
+      .uname{font-size:0.82rem}
+      .email-sub{display:none}
+      .pin{font-size:0.9rem;letter-spacing:2px}
+      .sbtn,.vbtn{padding:4px 8px;font-size:0.68rem}
+    }
   </style>
 </head>
 <body>
@@ -79,7 +95,7 @@
 
   <input class="search" type="text" placeholder="Search student..." oninput="filter(this.value)"/>
 
-  <table id="tbl">
+  <div class="tbl-wrap"><table id="tbl">
     <thead><tr><th>Student</th><th>PIN</th><th>Last Active</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>
     {% for s in students %}
@@ -89,7 +105,7 @@
           <div class="av">{{ s.name[:2].upper() }}</div>
           <div>
             <div style="font-weight:500;color:#ede9fe">{{ s.name }}</div>
-            <div style="font-size:0.7rem;color:rgba(200,185,255,0.45)">{{ s.email }}</div>
+            <div class="email-sub" style="font-size:0.7rem;color:rgba(200,185,255,0.45)">{{ s.email }}</div>
           </div>
         </div>
       </td>
@@ -107,7 +123,7 @@
     </tr>
     {% endfor %}
     </tbody>
-  </table>
+  </table></div>
   {% endif %}
 </div>
 
