@@ -138,7 +138,9 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("login"))
+    response = redirect(url_for("login"))
+    response.delete_cookie("session")   # fully remove cookie from browser
+    return response
 
 
 @app.route("/chat", methods=["POST"])
