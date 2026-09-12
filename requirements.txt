@@ -1,2 +1,4 @@
-streamlit
+﻿flask
 google-genai
+python-dotenv
+gunicorn
