@@ -73,7 +73,7 @@ def get_ai_reply(history):
         try:
             client = genai.Client(api_key=key)
             resp = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.6-flash",
                 contents=history,
                 config=types.GenerateContentConfig(system_instruction=ADMIN_KNOWLEDGE),
             )
