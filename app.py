@@ -5,8 +5,7 @@ from google.genai import types
 from dotenv import load_dotenv
 from functools import wraps
 import firebase_service as fb
-import os
-import traceback
+import os, traceback, threading
 
 load_dotenv()
 
@@ -20,7 +19,10 @@ API_KEYS = [k for k in [
     os.getenv("GEMINI_API_KEY_4", ""),
 ] if k]
 
-ADMIN_NAME = os.getenv("ADMIN_NAME", "").strip().lower()
+ADMIN_EMAIL  = os.getenv("ADMIN_EMAIL", "").strip().lower()
+SENDER_EMAIL = os.getenv("SENDER_EMAIL", "")
+GMAIL_APP_PW = os.getenv("GMAIL_APP_PASSWORD", "")
+SITE_URL     = os.getenv("SITE_URL", "https://shourya-and-harsh-cr.tech")
 
 ADMIN_KNOWLEDGE = """
 You are the official AI assistant for the Class Representative (CR).
@@ -84,15 +86,10 @@ def admin_required(f):
     return dec
 
 
-# Health check route — helps debug startup
 @app.route("/health")
 def health():
-    status = {
-        "api_keys": len(API_KEYS),
-        "admin_name_set": bool(ADMIN_NAME),
-        "firebase_creds_set": bool(os.getenv("FIREBASE_CREDENTIALS_JSON")),
-    }
-    return jsonify(status)
+    return {"api_keys": len(API_KEYS), "admin_email": bool(ADMIN_EMAIL),
+            "sender_email": bool(SENDER_EMAIL), "firebase": bool(os.getenv("FIREBASE_CREDENTIALS_JSON"))}
 
 
 @app.route("/")
@@ -103,11 +100,8 @@ def index():
         history = fb.get_user_messages(user["uid"])
     except Exception:
         history = []
-    return render_template("index.html",
-                           welcome=WELCOME_MESSAGE,
-                           user=user,
-                           history=history,
-                           is_admin=session.get("is_admin", False))
+    return render_template("index.html", welcome=WELCOME_MESSAGE, user=user,
+                           history=history, is_admin=session.get("is_admin", False))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -116,23 +110,19 @@ def login():
         return redirect(url_for("index"))
     error = None
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        pin  = request.form.get("pin", "").strip()
-        if not name or len(pin) != 4 or not pin.isdigit():
-            error = "Please enter your name and a valid 4-digit PIN."
+        email = request.form.get("email", "").strip().lower()
+        pin   = request.form.get("pin", "").strip()
+        if not email or len(pin) != 4 or not pin.isdigit():
+            error = "Please enter your IIIT BH email and 4-digit PIN."
         else:
             try:
-                uid, user, status = fb.login_or_register(name, pin)
-                if status == "wrong_pin":
-                    error = "wrong_pin"
-                else:
-                    session["user"] = user
-                    session["messages"] = []
-                    session["is_admin"] = (fb.make_uid(name) == ADMIN_NAME or
-                                           name.strip().lower() == ADMIN_NAME)
-                    return redirect(url_for("index"))
-            except Exception as e:
-                error = f"Server error: {str(e)}"
+                uid, user = fb.verify_login(email, pin)
+                session["user"] = {"uid": uid, "email": email, "name": user.get("name", email.split(".")[0].capitalize())}
+                session["messages"] = []
+                session["is_admin"] = (email == ADMIN_EMAIL)
+                return redirect(url_for("index"))
+            except ValueError as e:
+                error = str(e)
     return render_template("login.html", error=error)
 
 
@@ -164,34 +154,78 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+# ── ADMIN ROUTES ──────────────────────────────────────────────────────────
 @app.route("/admin")
 @admin_required
 def admin():
     try:
-        users = fb.get_all_users()
+        students = fb.get_all_students()
     except Exception as e:
-        users = []
-    return render_template("admin.html", users=users)
+        students = []
+    seeded = len(students) > 0
+    return render_template("admin.html", students=students, seeded=seeded)
+
+
+@app.route("/admin/seed", methods=["POST"])
+@admin_required
+def admin_seed():
+    try:
+        count = fb.seed_all_students()
+        return jsonify({"ok": True, "seeded": count})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app.route("/admin/user/<uid>")
 @admin_required
 def admin_user(uid):
     try:
-        user, messages = fb.get_user_full_chat(uid)
+        user, messages = fb.get_student_full_chat(uid)
     except Exception:
         user, messages = {}, []
     return render_template("admin_chat.html", user=user, messages=messages)
 
 
+@app.route("/admin/send-pin/<uid>", methods=["POST"])
+@admin_required
+def send_pin(uid):
+    if not SENDER_EMAIL or not GMAIL_APP_PW:
+        return jsonify({"ok": False, "error": "SENDER_EMAIL or GMAIL_APP_PASSWORD not set in Config Vars"}), 500
+    try:
+        db_doc = fb.get_db().collection("students").document(uid).get()
+        if not db_doc.exists:
+            return jsonify({"ok": False, "error": "Student not found"}), 404
+        s = db_doc.to_dict()
+        fb.send_pin_email(s["email"], s["name"], s["pin_plain"],
+                          SENDER_EMAIL, GMAIL_APP_PW, SITE_URL)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/admin/send-all-pins", methods=["POST"])
+@admin_required
+def send_all_pins():
+    if not SENDER_EMAIL or not GMAIL_APP_PW:
+        return jsonify({"ok": False, "error": "Email credentials not set"}), 500
+    def send_in_bg():
+        students = fb.get_all_students()
+        for s in students:
+            try:
+                fb.send_pin_email(s["email"], s["name"], s["pin_plain"],
+                                  SENDER_EMAIL, GMAIL_APP_PW, SITE_URL)
+            except Exception:
+                pass
+    threading.Thread(target=send_in_bg, daemon=True).start()
+    return jsonify({"ok": True, "message": "Sending in background..."})
+
+
 @app.errorhandler(500)
 def server_error(e):
-    return f"""
-    <html><body style="font-family:monospace;padding:30px;background:#0a0010;color:#e0d7ff">
+    return f"""<html><body style="font-family:monospace;padding:30px;background:#0a0010;color:#e0d7ff">
     <h2 style="color:#f87171">500 Server Error</h2>
     <pre style="background:rgba(255,255,255,0.05);padding:16px;border-radius:8px">{traceback.format_exc()}</pre>
-    </body></html>
-    """, 500
+    </body></html>""", 500
 
 
 if __name__ == "__main__":
