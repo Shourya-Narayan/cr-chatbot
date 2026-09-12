@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import (Flask, render_template, request, jsonify,
+                   session, redirect, url_for)
 from google import genai
 from google.genai import types
-from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from functools import wraps
 import firebase_service as fb
@@ -10,9 +10,9 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "cr-chatbot-secret-key-change-me")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "cr-chatbot-secret-change-me")
 
-# --- API KEYS ---
+# --- API KEYS (4 with fallback) ---
 API_KEYS = [k for k in [
     os.getenv("GEMINI_API_KEY_1", ""),
     os.getenv("GEMINI_API_KEY_2", ""),
@@ -20,17 +20,7 @@ API_KEYS = [k for k in [
     os.getenv("GEMINI_API_KEY_4", ""),
 ] if k]
 
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
-
-# --- GOOGLE OAUTH ---
-oauth = OAuth(app)
-google_oauth = oauth.register(
-    name="google",
-    client_id=os.getenv("GOOGLE_CLIENT_ID"),
-    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={"scope": "openid email profile"},
-)
+ADMIN_NAME = os.getenv("ADMIN_NAME", "").strip().lower()   # your name, lowercase
 
 # --- KNOWLEDGE BASE ---
 ADMIN_KNOWLEDGE = """
@@ -39,17 +29,18 @@ Your job is to answer student questions based ONLY on the information below.
 Be friendly, helpful, and concise.
 
 IMPORTANT INFO / ANNOUNCEMENTS:
-1. Engineering Materials: There is a quiz next Friday at 6:00 PM. (Note: The normal Engineering Materials class will still take place that day).
+1. Engineering Materials: There is a quiz next Friday at 6:00 PM. (The normal class will still take place that day).
 2. Math: Tomorrow (Sunday) there will be a math class from 8:00 AM to 9:00 AM.
 3. Mechanical Theory: Last week's Friday class has been rescheduled to Monday from 3:00 PM to 4:00 PM.
 
 LINKS:
-- If a student asks for the class schedule: https://drive.google.com/file/d/1rdlji6W6JU75uzLu_XHAcsuWo2FsR3Tn/view?usp=sharing
-- If a student asks for pyqs / notes: https://iiitbh-pyq-hub.vercel.app
-- If a student asks for syllabus, say: go figure it out yourself.
+- Class schedule: https://drive.google.com/file/d/1rdlji6W6JU75uzLu_XHAcsuWo2FsR3Tn/view?usp=sharing
+- PYQs / Notes: https://iiitbh-pyq-hub.vercel.app
+- Syllabus: go figure it out yourself.
 
 IMPORTANT RULE:
-If a student asks something NOT in this list, reply: "I don't have that information right now. Don't ask irrelevant stuff. Please DM the CR directly if you believe your query is genuine!"
+If a student asks something NOT in this list, reply exactly:
+"I don't have that information right now. Don't ask irrelevant stuff. Please DM the CR directly if you believe your query is genuine!"
 """
 
 WELCOME_MESSAGE = """👋 Welcome! Here are the latest class updates:
@@ -90,10 +81,8 @@ def login_required(f):
 def admin_required(f):
     @wraps(f)
     def dec(*a, **kw):
-        if "user" not in session:
+        if "user" not in session or not session.get("is_admin"):
             return redirect(url_for("login"))
-        if session["user"].get("email") != ADMIN_EMAIL:
-            return "<h2 style='font-family:sans-serif;color:red;padding:40px'>403 — Access Denied</h2>", 403
         return f(*a, **kw)
     return dec
 
@@ -103,29 +92,38 @@ def admin_required(f):
 @login_required
 def index():
     user = session["user"]
-    history = fb.get_user_messages(user["sub"])
-    return render_template("index.html", welcome=WELCOME_MESSAGE, user=user, history=history)
+    history = fb.get_user_messages(user["uid"])
+    return render_template("index.html",
+                           welcome=WELCOME_MESSAGE,
+                           user=user,
+                           history=history,
+                           is_admin=session.get("is_admin", False))
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if "user" in session:
         return redirect(url_for("index"))
-    return render_template("login.html")
 
+    error = None
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        pin  = request.form.get("pin", "").strip()
 
-@app.route("/google-login")
-def google_login():
-    return google_oauth.authorize_redirect(url_for("callback", _external=True))
+        if not name or len(pin) != 4 or not pin.isdigit():
+            error = "Please enter your name and a 4-digit PIN."
+        else:
+            uid, user, status = fb.login_or_register(name, pin)
+            if status == "wrong_pin":
+                error = "wrong_pin"
+            else:
+                session["user"] = user
+                session["messages"] = []
+                session["is_admin"] = (uid == ADMIN_NAME or
+                                       name.strip().lower() == ADMIN_NAME)
+                return redirect(url_for("index"))
 
-
-@app.route("/callback")
-def callback():
-    token = google_oauth.authorize_access_token()
-    session["user"] = dict(token.get("userinfo"))
-    session["messages"] = []
-    fb.save_user(session["user"])
-    return redirect(url_for("index"))
+    return render_template("login.html", error=error)
 
 
 @app.route("/logout")
@@ -141,7 +139,7 @@ def chat():
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
 
-    uid = session["user"]["sub"]
+    uid = session["user"]["uid"]
     if "messages" not in session:
         session["messages"] = []
 

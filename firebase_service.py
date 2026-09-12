@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
-import os, json
+from werkzeug.security import generate_password_hash, check_password_hash
+import os, json, re
 
 def _init():
     if firebase_admin._apps:
@@ -11,32 +12,57 @@ def _init():
     elif os.path.exists("firebase-credentials.json"):
         cred = credentials.Certificate("firebase-credentials.json")
     else:
-        raise RuntimeError("Firebase credentials not found! Set FIREBASE_CREDENTIALS_JSON env var.")
+        raise RuntimeError("Firebase credentials not found!")
     firebase_admin.initialize_app(cred)
     return firestore.client()
 
 db = _init()
 
 
-def save_user(user_info):
-    db.collection("users").document(user_info["sub"]).set({
-        "name":      user_info.get("name", ""),
-        "email":     user_info.get("email", ""),
-        "photo":     user_info.get("picture", ""),
-        "last_seen": firestore.SERVER_TIMESTAMP,
-    }, merge=True)
+def make_uid(name):
+    """Convert name to a safe Firestore document ID."""
+    return re.sub(r"[^a-z0-9_]", "_", name.strip().lower())
 
 
-def save_message(google_id, role, content):
-    db.collection("users").document(google_id).collection("messages").add({
+def login_or_register(name, pin):
+    """
+    Returns (uid, user_dict, status)
+    status: "ok" | "wrong_pin" | "registered"
+    """
+    uid = make_uid(name)
+    ref = db.collection("users").document(uid)
+    doc = ref.get()
+
+    if not doc.exists:
+        # New user — register
+        ref.set({
+            "name":      name.strip(),
+            "pin_hash":  generate_password_hash(pin),
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "last_seen":  firestore.SERVER_TIMESTAMP,
+        })
+        return uid, {"name": name.strip(), "uid": uid}, "registered"
+
+    user = doc.to_dict()
+    user["uid"] = uid
+
+    if check_password_hash(user["pin_hash"], pin):
+        ref.update({"last_seen": firestore.SERVER_TIMESTAMP})
+        return uid, user, "ok"
+    else:
+        return None, None, "wrong_pin"
+
+
+def save_message(uid, role, content):
+    db.collection("users").document(uid).collection("messages").add({
         "role":      role,
         "content":   content,
         "timestamp": firestore.SERVER_TIMESTAMP,
     })
 
 
-def get_user_messages(google_id):
-    docs = (db.collection("users").document(google_id)
+def get_user_messages(uid):
+    docs = (db.collection("users").document(uid)
               .collection("messages").order_by("timestamp").stream())
     result = []
     for doc in docs:
@@ -63,10 +89,10 @@ def get_all_users():
     return users
 
 
-def get_user_full_chat(google_id):
-    doc = db.collection("users").document(google_id).get()
+def get_user_full_chat(uid):
+    doc = db.collection("users").document(uid).get()
     user = doc.to_dict() if doc.exists else {}
-    docs = (db.collection("users").document(google_id)
+    docs = (db.collection("users").document(uid)
               .collection("messages").order_by("timestamp").stream())
     messages = []
     for d in docs:

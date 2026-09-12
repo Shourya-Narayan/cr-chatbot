@@ -2,6 +2,5 @@ flask
 google-genai
 python-dotenv
 gunicorn
-authlib
 firebase-admin
-requests
+werkzeug
