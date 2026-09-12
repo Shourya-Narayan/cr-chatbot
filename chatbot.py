@@ -38,6 +38,27 @@ What else can I help you with? (Type your question below)"""
 # --- 4. WEB UI SETUP ---
 st.set_page_config(page_title="CR Chatbot", page_icon="🎓")
 st.title("🎓 Class Rep Chatbot")
+# --- FLUID BACKGROUND ---
+fluid_bg = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(-45deg, #1a0b2e, #4b1d52, #1d3557, #0f4c5c);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+}
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+/* Make the chat bubbles slightly transparent so the fluid shows through! */
+[data-testid="stChatMessage"] {
+    background-color: rgba(30, 30, 30, 0.6) !important;
+    backdrop-filter: blur(5px);
+}
+</style>
+"""
+st.markdown(fluid_bg, unsafe_allow_html=True)
 
 # Set up the chat history and inject the WELCOME_MESSAGE first!
 if "messages" not in st.session_state:
