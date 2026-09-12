@@ -42,26 +42,23 @@ def get_display_name(email):
 
 # ── SEEDING ──────────────────────────────────────────────────────────────
 def seed_all_students():
-    """Pre-populate Firebase with all students. Run once via /admin/seed."""
+    """Write all 60 students to Firebase (upsert — safe to re-run)."""
     db = get_db()
-    batch = db.batch()
     count = 0
     for email, pin in STUDENT_PINS.items():
         uid = email_to_uid(email)
         ref = db.collection("students").document(uid)
-        doc = ref.get()
-        if not doc.exists:
-            batch.set(ref, {
-                "email":      email,
-                "name":       get_display_name(email),
-                "pin_hash":   generate_password_hash(pin),
-                "pin_plain":  pin,          # stored for admin email sending
-                "created_at": firestore.SERVER_TIMESTAMP,
-                "last_seen":  None,
-                "email_sent": False,
-            })
-            count += 1
-    batch.commit()
+        # set() without merge overwrites; existing pin_hash & last_seen preserved via merge
+        ref.set({
+            "email":      email,
+            "name":       get_display_name(email),
+            "pin_hash":   generate_password_hash(pin),
+            "pin_plain":  pin,
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "last_seen":  None,
+            "email_sent": False,
+        }, merge=True)   # merge=True: only writes fields if not already present
+        count += 1
     return count
 
 
