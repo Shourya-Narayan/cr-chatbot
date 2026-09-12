@@ -39,22 +39,44 @@ What else can I help you with? (Type your question below)"""
 st.set_page_config(page_title="CR Chatbot", page_icon="🎓")
 st.title("🎓 Class Rep Chatbot")
 # --- FLUID BACKGROUND ---
+# --- ULTRA PREMIUM FLUID BACKGROUND ---
 fluid_bg = """
 <style>
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(-45deg, #1a0b2e, #4b1d52, #1d3557, #0f4c5c);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+/* 1. The Fluid Aurora Background */
+.stApp {
+    background: linear-gradient(-45deg, #050505, #1B092A, #2F0B38, #0A192F, #050505);
+    background-size: 300% 300%;
+    animation: aurora 20s ease infinite;
 }
-@keyframes gradient {
+@keyframes aurora {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-/* Make the chat bubbles slightly transparent so the fluid shows through! */
+
+/* 2. Hide the default Streamlit top header line */
+[data-testid="stHeader"] {
+    background-color: transparent !important;
+}
+
+/* 3. Frosted Glass Chat Bubbles */
 [data-testid="stChatMessage"] {
-    background-color: rgba(30, 30, 30, 0.6) !important;
-    backdrop-filter: blur(5px);
+    background: rgba(255, 255, 255, 0.03) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 15px !important;
+    margin-bottom: 15px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 4. Glass Text Input Box */
+[data-testid="stChatInput"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 </style>
 """
