@@ -3,7 +3,7 @@ from google import genai
 from google.genai import types
 
 # --- 1. SETUP ---
-API_KEY = st.secrets["GEMINI_API_KEY"]  # <--- PASTE YOUR REAL KEY HERE
+API_KEY = st.secrets["GEMINI_API_KEY"]  
 client = genai.Client(api_key=API_KEY)
 
 # --- 2. ADMIN KNOWLEDGE BASE ---
@@ -13,12 +13,17 @@ You are the official AI assistant for the Class Representative (CR).
 Your job is to answer student questions based ONLY on the information below. 
 Be friendly, helpful, and concise.
 
-CURRENT CLASS INFO:
-- Math Class: Monday and Wednesday at 10:00 AM.
-- Physics Lab: CANCELED this week.
-- Assignments: Python mini-project is due this Friday at midnight. No extensions!
+IMPORTANT INFO / ANNOUNCEMENTS:
+If a student asks for important info, updates, or announcements, tell them these 3 things:
+1. Engineering Materials: There is a quiz next Friday at 6:00 PM. (Note: The normal Engineering Materials class will still take place that day).
+2. Math: Tomorrow (Sunday) there will be a math class from 8:00 AM to 9:00 AM.
+3. Mechanical Theory: Last week's Friday class has been rescheduled to Monday from 3:00 PM to 4:00 PM.
 
-IMPORTANT RULE: If a student asks a question about something that is NOT in this list, do not guess. Simply reply: "I don't have that information right now. Please DM the CR directly!"
+LINKS:
+- If a student asks for the class schedule, give them this exact link: https://drive.google.com/file/d/1rdlji6W6JU75uzLu_XHAcsuWo2FsR3Tn/view?usp=sharing
+
+IMPORTANT RULE: 
+If a student asks a question about something that is NOT in this list, do not guess. Simply reply: "I don't have that information right now. Don't ask irrelevant stuff. Please DM the CR directly if you believe your query is genuine!"
 """
 
 # --- 3. WEB UI SETUP ---
