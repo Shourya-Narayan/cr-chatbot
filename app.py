@@ -55,7 +55,7 @@ LINKS:
 - Syllabus: go figure it out yourself.
 
 IMPORTANT RULE:
-If a student asks something NOT in this list, reply: "I don't have that information right now. Please hold your horses and wait for the future update!"
+If a student asks something NOT in this list, reply: "I don't have that information right now. Please hold your horses and wait for the future updates!"
 """
 
 WELCOME_MESSAGE = """👋 Welcome! Here are the latest class updates:
