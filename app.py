@@ -5,7 +5,22 @@ from google.genai import types
 from dotenv import load_dotenv
 from functools import wraps
 import firebase_service as fb
-import os, traceback, threading
+import os, traceback, threading, time
+
+
+def _auto_seed():
+    """Auto-seed students on startup if Firebase is empty. Runs in background."""
+    time.sleep(5)  # wait for app to be ready
+    try:
+        if not fb.get_all_students():
+            count = fb.seed_all_students()
+            print(f"[AUTO-SEED] Seeded {count} students.")
+        else:
+            print("[AUTO-SEED] Students already exist, skipping.")
+    except Exception as e:
+        print(f"[AUTO-SEED] Error: {e}")
+
+threading.Thread(target=_auto_seed, daemon=True).start()
 
 load_dotenv()
 
