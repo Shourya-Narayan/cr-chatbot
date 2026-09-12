@@ -147,7 +147,7 @@ def send_pin_email(to_email, student_name, pin, sender_email, app_password, site
 
 Your login credentials for the CR Chatbot are ready!
 
-  Website : {site_url}
+  Website : https://tinyurl.com/iiitbhmechatronics
   Email   : {to_email}
   PIN     : {pin}
 
@@ -166,7 +166,7 @@ Use these to login and get the latest class updates, schedule, PYQs and more.
     <p style="margin:0 0 8px;font-size:0.8rem;color:rgba(200,185,255,0.5)">YOUR PIN</p>
     <p style="font-size:2.5rem;font-weight:700;letter-spacing:12px;color:#a78bfa;margin:0">{pin}</p>
   </div>
-  <a href="{site_url}" style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:13px;border-radius:12px;text-decoration:none;font-weight:500">Open Chatbot →</a>
+  <a href="https://tinyurl.com/iiitbhmechatronics" style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:13px;border-radius:12px;text-decoration:none;font-weight:500">Open Chatbot →</a>
   <p style="text-align:center;font-size:0.72rem;color:rgba(200,185,255,0.3);margin-top:20px">IIIT Bhagalpur · Class Representative Portal</p>
 </div>
 """

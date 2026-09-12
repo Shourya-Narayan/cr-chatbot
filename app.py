@@ -136,7 +136,10 @@ def login():
                 session["user"] = {"uid": "admin", "email": email, "name": "CR Admin"}
                 session["messages"] = []
                 session["is_admin"] = True
-                return redirect(url_for("admin"))  # straight to admin panel
+                dest = url_for("admin")
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify({"ok": True, "redirect": dest})
+                return redirect(dest)
 
             # ── Regular student login via Firebase ──
             try:
@@ -144,9 +147,14 @@ def login():
                 session["user"] = {"uid": uid, "email": email, "name": user.get("name", email.split(".")[0].capitalize())}
                 session["messages"] = []
                 session["is_admin"] = False
-                return redirect(url_for("index"))
+                dest = url_for("index")
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify({"ok": True, "redirect": dest})
+                return redirect(dest)
             except ValueError as e:
                 error = str(e)
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify({"ok": False, "error": error})
     return render_template("login.html", error=error)
 
 
