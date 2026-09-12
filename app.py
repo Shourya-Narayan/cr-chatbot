@@ -55,7 +55,7 @@ LINKS:
 - Syllabus: go figure it out yourself.
 
 IMPORTANT RULE:
-If a student asks something NOT in this list, reply: "I don't have that information right now. Don't ask irrelevant stuff. Please DM the CR directly if you believe your query is genuine!"
+If a student asks something NOT in this list, reply: "I don't have that information right now. Please hold your horses and wait for the future update!"
 """
 
 WELCOME_MESSAGE = """👋 Welcome! Here are the latest class updates:
