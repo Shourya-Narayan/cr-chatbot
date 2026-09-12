@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
+  {%- raw %}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.09);--text:#ede9fe;--muted:rgba(200,185,255,0.45);--accent:#8b5cf6}
     html,body{height:100%;font-family:'Inter',sans-serif;background:#07030f;overflow:hidden}
@@ -70,6 +71,7 @@
     #sbtn:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
     #hint{text-align:center;font-size:0.6rem;color:var(--muted);margin-top:7px}
     @media(max-width:600px){#header{padding:11px 13px}#chat{padding:12px 10px 8px}#iarea{padding:10px 10px 14px}.bwrap{max-width:86%}}
+    {% endraw %}
   </style>
 </head>
 <body>
