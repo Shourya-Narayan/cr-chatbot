@@ -113,13 +113,22 @@ def login():
         email = request.form.get("email", "").strip().lower()
         pin   = request.form.get("pin", "").strip()
         if not email or len(pin) != 4 or not pin.isdigit():
-            error = "Please enter your IIIT BH email and 4-digit PIN."
+            error = "Please enter your email and 4-digit PIN."
         else:
+            # ── Special admin login (bypasses Firebase student list) ──
+            ADMIN_PIN = os.getenv("ADMIN_PIN", "2030")
+            if email == ADMIN_EMAIL and pin == ADMIN_PIN:
+                session["user"] = {"uid": "admin", "email": email, "name": "CR Admin"}
+                session["messages"] = []
+                session["is_admin"] = True
+                return redirect(url_for("admin"))  # straight to admin panel
+
+            # ── Regular student login via Firebase ──
             try:
                 uid, user = fb.verify_login(email, pin)
                 session["user"] = {"uid": uid, "email": email, "name": user.get("name", email.split(".")[0].capitalize())}
                 session["messages"] = []
-                session["is_admin"] = (email == ADMIN_EMAIL)
+                session["is_admin"] = False
                 return redirect(url_for("index"))
             except ValueError as e:
                 error = str(e)
