@@ -55,13 +55,13 @@ LINKS:
 - Syllabus: go figure it out yourself.
 
 IMPORTANT RULE:
-If a student asks something NOT in this list, reply: "I don't have that information right now. Please hold your horses and wait for the future updates!"
+If a student asks something NOT in this list, reply: "I don't have that information right now. Please hold your horses and wait for the future updates or contact Anshika."
 """
 
 WELCOME_MESSAGE = """👋 Welcome! Here are the latest class updates:
 
 1. **Engineering Materials:** Quiz next Friday at 6:00 PM (normal class still takes place).
-2. **Math:** Class is tomorrow (Sunday) from 8:00 AM to 9:00 AM.
+2. **Math:** Class is tomorrow (Monday) from 8:00 AM to 9:00 AM.
 3. **Mechanical Theory:** Rescheduled to Monday from 3:00 PM to 4:00 PM.
 
 What else can I help you with?"""
